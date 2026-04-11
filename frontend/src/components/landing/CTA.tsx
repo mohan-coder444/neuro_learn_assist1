@@ -21,8 +21,7 @@ export default function CTA() {
     <section
       ref={ref}
       id="cta"
-      className="relative py-28 px-6 overflow-hidden"
-      style={{ background: 'radial-gradient(ellipse 80% 65% at 50% 50%, rgba(139,92,246,0.1) 0%, transparent 70%)' }}
+      className="relative py-28 px-6 overflow-hidden bg-[radial-gradient(ellipse_80%_65%_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_70%)]"
       aria-labelledby="cta-heading"
     >
       {/* Parallax glow behind box */}

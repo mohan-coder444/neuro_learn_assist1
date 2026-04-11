@@ -96,8 +96,7 @@ function FeatureCard({ feature, index }: { feature: typeof features[0]; index: n
       whileHover={{ scale: 1.01 }}
     >
       {/* Shine effect on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-        style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.04), rgba(139,92,246,0.04))' }}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-[linear-gradient(135deg,rgba(59,130,246,0.04),rgba(139,92,246,0.04))]"
         aria-hidden="true"
       />
 
@@ -122,8 +121,7 @@ export default function Features() {
   return (
     <section
       id="features"
-      className="relative py-28 px-6"
-      style={{ background: 'linear-gradient(180deg, transparent, rgba(8,13,34,0.8) 50%, transparent)' }}
+      className="relative py-28 px-6 bg-[linear-gradient(180deg,transparent,rgba(8,13,34,0.8)_50%,transparent)]"
       aria-labelledby="features-heading"
     >
       <div className="max-w-6xl mx-auto">

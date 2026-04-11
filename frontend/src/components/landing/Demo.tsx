@@ -123,11 +123,10 @@ export default function Demo() {
             </div>
 
             {/* Stats Panel */}
-            <div className="p-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5 content-start" role="list" aria-label="Session statistics">
+            <div className="p-7 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5 content-start" aria-label="Session statistics">
               {stats.map((s, i) => (
                 <motion.div
                   key={s.label}
-                  role="listitem"
                   className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5"
                   initial={{ opacity: 0, x: 30 }}
                   animate={inView ? { opacity: 1, x: 0 } : {}}

@@ -55,7 +55,8 @@
     box-shadow: 0 0 40px rgba(59,130,246,0.4);
   }
   .text-balance {
-    text-wrap: balance;
+    word-wrap: break-word;
+    white-space: normal;
   }
   .animate-pulse-glow {
     animation: pulseGlow 3s ease-in-out infinite;

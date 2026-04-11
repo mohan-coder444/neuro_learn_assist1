@@ -69,10 +69,8 @@ export default function Testimonials() {
         </motion.div>
       </div>
 
-      {/* Scrolling carousel */}
       <div
-        className="relative"
-        style={{ maskImage: 'linear-gradient(90deg, transparent, black 10%, black 90%, transparent)' }}
+        className="relative [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]"
         role="region"
         aria-label="Testimonials carousel"
       >

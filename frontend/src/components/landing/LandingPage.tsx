@@ -15,13 +15,11 @@ export default function LandingPage() {
     <div className="dark relative">
       {/* Global ambient orbs */}
       <div
-        className="fixed top-[-200px] left-[-200px] w-[600px] h-[600px] rounded-full opacity-10 pointer-events-none z-0 animate-pulse-slow"
-        style={{ background: 'radial-gradient(circle, #3b82f6, transparent)', filter: 'blur(130px)' }}
+        className="fixed top-[-200px] left-[-200px] w-[600px] h-[600px] rounded-full opacity-10 pointer-events-none z-0 animate-pulse-slow bg-[radial-gradient(circle,#3b82f6,transparent)] blur-[130px]"
         aria-hidden="true"
       />
       <div
-        className="fixed bottom-[-100px] right-[-100px] w-[500px] h-[500px] rounded-full opacity-10 pointer-events-none z-0 animate-pulse-slow"
-        style={{ background: 'radial-gradient(circle, #8b5cf6, transparent)', filter: 'blur(130px)', animationDelay: '4s' }}
+        className="fixed bottom-[-100px] right-[-100px] w-[500px] h-[500px] rounded-full opacity-10 pointer-events-none z-0 animate-pulse-slow bg-[radial-gradient(circle,#8b5cf6,transparent)] blur-[130px] [animation-delay:4s]"
         aria-hidden="true"
       />
 

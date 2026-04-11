@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, AnimatePresence } from 'framer-motion';
 
 const navLinks = [
   { label: 'Features', href: '#features' },
@@ -14,7 +14,6 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { scrollY } = useScroll();
-  const bgOpacity = useTransform(scrollY, [0, 80], [0.6, 0.97]);
 
   useEffect(() => {
     const unsub = scrollY.on('change', v => setScrolled(v > 50));
@@ -30,7 +29,8 @@ export default function Navbar() {
   return (
     <motion.header
       aria-label="Main navigation"
-      className="fixed top-3 left-1/2 z-50 w-[calc(100%-40px)] max-w-[1200px] -translate-x-1/2"
+      className="fixed top-3 left-1/2 z-50 w-[calc(100%-40px)] max-w-[1200px]"
+      style={{ x: '-50%' }}
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
@@ -112,7 +112,7 @@ export default function Navbar() {
             className="md:hidden p-2 text-slate-300 hover:text-white transition-colors rounded-lg hover:bg-white/5"
             onClick={() => setMobileOpen(v => !v)}
             aria-label="Toggle navigation menu"
-            aria-expanded={mobileOpen}
+            aria-expanded={mobileOpen ? 'true' : 'false'}
           >
             <AnimatePresence mode="wait">
               {mobileOpen ? (
@@ -141,9 +141,9 @@ export default function Navbar() {
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
-            <ul className="flex flex-col p-4 gap-1">
+            <div className="flex flex-col p-4 gap-1">
               {navLinks.map((link, i) => (
-                <motion.li key={link.href}
+                <motion.div key={link.href}
                   initial={{ opacity: 0, x: -16 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.06 }}
@@ -154,9 +154,9 @@ export default function Navbar() {
                   >
                     {link.label}
                   </button>
-                </motion.li>
+                </motion.div>
               ))}
-              <motion.li initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
                 className="flex flex-col gap-2 pt-2">
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)}
                   className="w-full text-center px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-300 border border-white/10 hover:border-violet-500/40 hover:bg-white/5 transition-all">
@@ -166,8 +166,8 @@ export default function Navbar() {
                   className="w-full text-center px-4 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-500 to-violet-600 animate-pulse-glow">
                   Get Started Free
                 </button>
-              </motion.li>
-            </ul>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

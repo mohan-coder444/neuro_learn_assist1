@@ -69,8 +69,7 @@ export default function Pricing() {
   return (
     <section
       id="pricing"
-      className="py-28 px-6"
-      style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(59,130,246,0.06) 0%, transparent 70%)' }}
+      className="py-28 px-6 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(59,130,246,0.06)_0%,transparent_70%)]"
       aria-labelledby="pricing-heading"
     >
       <div className="max-w-6xl mx-auto">

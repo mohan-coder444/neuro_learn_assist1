@@ -90,8 +90,7 @@ export default function HowItWorks() {
     <section
       ref={ref}
       id="how"
-      className="relative py-28 px-6 overflow-hidden"
-      style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(139,92,246,0.08) 0%, transparent 70%)' }}
+      className="relative py-28 px-6 overflow-hidden bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(139,92,246,0.08)_0%,transparent_70%)]"
       aria-labelledby="how-heading"
     >
       <div className="max-w-6xl mx-auto">
