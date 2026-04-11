@@ -1,0 +1,39 @@
+services:
+  # Backend Service
+  - type: web
+    name: neurolearn-backend
+    env: docker
+    repo: https://github.com/mohan-coder444/neuro_learn_assist1.git # Replace with your actual repo URL if different
+    rootDir: backend
+    plan: starter # Starter plan recommended for ML workloads
+    envVars:
+      - key: PORT
+        value: 8000
+      - fromGroup: neurolearn-secrets # We will create a secret group for API keys
+
+  # Frontend Service
+  - type: web
+    name: neurolearn-frontend
+    env: static
+    repo: https://github.com/mohan-coder444/neuro_learn_assist1.git
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          name: neurolearn-backend
+          type: web
+          property: host
+
+envVarGroups:
+  - name: neurolearn-secrets
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false # Set manually in Render dashboard
+      - key: ELEVENLABS_API_KEY
+        sync: false # Set manually in Render dashboard
+      - key: RVC_MODEL_REPO
+        sync: false
+      - key: RVC_MODEL_FILENAME
+        sync: false
