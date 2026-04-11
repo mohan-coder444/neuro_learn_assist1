@@ -1,0 +1,37 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.so
+.env
+
+# Node
+node_modules/
+.next/
+out/
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Audio test files
+tmp_test.wav
+
+# Data / models
+data/
+*.h5
+*.pkl
+*.pt
+*.onnx
