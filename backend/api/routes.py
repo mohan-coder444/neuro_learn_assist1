@@ -52,6 +52,7 @@ from services.vector_store import VectorStore, VectorStoreError
 from services.voice_agent import VoiceAgent
 from services.voice_pipeline import VoicePipeline, VoicePipelineError
 from services.voice_streamer import VoiceStreamer, VoiceStreamerError
+from services.video_service import VideoService, VideoServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,7 @@ class ServiceContainer:
     emotion_detector: EmotionDetector
     tutor_agent: TutorAgent
     braille: BrailleService
+    video: VideoService
     tutor_state: TutorState = field(default_factory=TutorState)
     current_document: StoredDocument | None = None
     current_summary: str = ""
@@ -107,6 +109,7 @@ _adaptive_quiz = AdaptiveQuiz(_gemini)
 _emotion_detector = EmotionDetector()
 _voice_pipeline = VoicePipeline(_stt, _gemini, _tts, _rvc)
 _voice_streamer = VoiceStreamer(_gemini, _tts, _rvc)
+_video = VideoService()
 _cache = CacheManager(cache_dir="data/cache")
 _ai_agent = NeuroLearnAgent()
 _command_agent = CommandAgent()
@@ -139,6 +142,7 @@ services = ServiceContainer(
     emotion_detector=_emotion_detector,
     tutor_agent=None,
     braille=BrailleService(),
+    video=_video,
 )
 
 
@@ -697,9 +701,42 @@ async def post_multi_agent_handle(payload: dict):
 )
 def get_voice_file(file_name: str):
     file_path = voice_output_dir / file_name
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Voice file not found.")
     return FileResponse(path=str(file_path), media_type="audio/wav", filename=file_name)
+
+
+@router.get("/download-mp4")
+async def download_mp4():
+    _require_document()
+    if not services.current_explanation:
+        raise HTTPException(status_code=400, detail="No explanation generated yet.")
+    
+    # Resolve the audio file
+    audio_file_name = services.current_explanation_audio.split('/')[-1]
+    audio_path = voice_output_dir / audio_file_name
+    
+    if not audio_path.exists():
+        # Regeneration fallback if file is missing
+        try:
+            voice_result = await services.voice_pipeline.explain_document(services.current_explanation)
+            audio_bytes = voice_result["audio"]
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Audio retrieval failed: {e}")
+    else:
+        audio_bytes = audio_path.read_bytes()
+
+    try:
+        # Generate the video
+        video_path = services.video.generate_explanation_mp4(
+            services.current_explanation, 
+            audio_bytes
+        )
+        return FileResponse(
+            path=video_path, 
+            media_type="video/mp4", 
+            filename="explanation.mp4"
+        )
+    except VideoServiceError as ex:
+        raise HTTPException(status_code=500, detail=str(ex))
 
 
 @router.post(
