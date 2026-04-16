@@ -6,11 +6,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from moviepy.editor import AudioFileClip, ColorClip, TextClip, CompositeVideoClip
+    from moviepy import AudioFileClip, VideoClip
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-from moviepy.editor import AudioFileClip, VideoClip
+from moviepy import AudioFileClip, VideoClip
 
 class VideoServiceError(Exception):
     pass
@@ -58,6 +58,8 @@ class VideoService:
         Creates an MP4 file with the given text displayed over a background and the audio.
         """
         import tempfile
+        import logging
+        logger = logging.getLogger(__name__)
         
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as audio_tmp:
             audio_tmp.write(audio_bytes)
@@ -67,23 +69,27 @@ class VideoService:
         output_path = str(self.output_dir / output_filename)
 
         try:
+            logger.info(f"Loading audio from {audio_path}")
             audio_clip = AudioFileClip(audio_path)
             duration = audio_clip.duration
 
             # Create video clip from frames
+            logger.info(f"Generating video clip (duration: {duration:.2f}s)")
             video_clip = VideoClip(lambda t: self._create_frame(t, text, duration), duration=duration)
             video_clip = video_clip.set_audio(audio_clip)
 
-            # Write file
+            # Write file - using 12 FPS for speed as it's static text
             video_clip.write_videofile(
                 output_path, 
                 fps=10, 
                 codec='libx264', 
                 audio_codec='aac', 
-                bitrate="1000k",
-                logger=None
+                bitrate="800k",
+                logger=None,
+                threads=4
             )
 
+            logger.info(f"Successfully generated video at {output_path}")
             return output_path
 
         except Exception as ex:
