@@ -7,6 +7,9 @@
   ],
   "scripts": {
     "build": "npm run build --prefix frontend",
-    "start": "caddy run --config Caddyfile --adapter caddyfile"
+    "start": "serve -s frontend/dist -l $PORT"
+  },
+  "dependencies": {
+    "serve": "^14.2.4"
   }
 }
