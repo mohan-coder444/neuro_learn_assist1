@@ -11,8 +11,6 @@ import soundfile as sf
 
 class TTSServiceError(Exception):
     pass
-
-
 class TTSService:
     def __init__(self) -> None:
         self.api_key = os.getenv("ELEVENLABS_API_KEY", "").strip()
@@ -20,18 +18,36 @@ class TTSService:
         self.voice = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
         self.model_id = os.getenv("ELEVENLABS_MODEL_ID", "eleven_multilingual_v2")
 
+
+    def _clean_text(self, text: str) -> str:
+        """Removes markdown characters and humanizes text for TTS."""
+        import re
+        # Remove bold/italic markers
+        text = re.sub(r'[*_]{1,3}', '', text)
+        # Remove headers
+        text = re.sub(r'#{1,6}\s?', '', text)
+        # Remove blockquotes
+        text = re.sub(r'^>\s?', '', text, flags=re.MULTILINE)
+        # Remove list markers
+        text = re.sub(r'^[-+*]\s?', '', text, flags=re.MULTILINE)
+        # Remove extra whitespace
+        text = re.sub(r'\s+', ' ', text).strip()
+        return text
+
     def generate_speech(self, text: str) -> bytes:
         if not text.strip():
             raise TTSServiceError("TTS input text is empty.")
         if not self.client:
             raise TTSServiceError("ELEVENLABS_API_KEY is not configured.")
 
+        clean_text = self._clean_text(text)
+
         try:
             stream = self.client.text_to_speech.convert(
                 voice_id=self.voice,
                 model_id=self.model_id,
                 output_format="mp3_44100_128",
-                text=text,
+                text=clean_text,
             )
             mp3_bytes = b"".join(chunk for chunk in stream if chunk)
             if not mp3_bytes:

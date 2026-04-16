@@ -1,11 +1,13 @@
-import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import { cleanTextForSpeech } from '../utils/textUtils';
 
 type Props = { summary: string };
 
 export default function SummaryViewer({ summary }: Readonly<Props>) {
   const speakSummary = () => {
     if (!("speechSynthesis" in globalThis) || !summary.trim()) return;
-    const utterance = new SpeechSynthesisUtterance(summary.slice(0, 2200));
+    const cleanText = cleanTextForSpeech(summary);
+    const utterance = new SpeechSynthesisUtterance(cleanText.slice(0, 2200));
     utterance.rate = 1;
     globalThis.speechSynthesis.speak(utterance);
   };
@@ -21,7 +23,13 @@ export default function SummaryViewer({ summary }: Readonly<Props>) {
           Listen Explanation
         </button>
       </div>
-      <p className="whitespace-pre-wrap text-[15px] leading-7 text-slate-700 dark:text-slate-200">{summary || 'No summary yet.'}</p>
+      <div className="prose prose-slate max-w-none text-[15px] leading-7 dark:prose-invert">
+        {summary ? (
+          <ReactMarkdown>{summary}</ReactMarkdown>
+        ) : (
+          <p className="text-slate-500">No summary yet.</p>
+        )}
+      </div>
     </section>
   );
 }

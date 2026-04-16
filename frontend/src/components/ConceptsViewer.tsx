@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import api from '../api/client';
+import { cleanTextForSpeech } from '../utils/textUtils';
 
 type Concept = { concept: string; explanation: string };
 type Props = { concepts: Concept[]; voiceExplanation?: string; fallbackSpeechText?: string };
@@ -24,7 +25,8 @@ export default function ConceptsViewer({ concepts, voiceExplanation, fallbackSpe
     const key = `neurolearn_last_spoken_explanation_${fallbackSpeechText.slice(0, 48)}`;
     if (localStorage.getItem(key)) return;
 
-    const utterance = new SpeechSynthesisUtterance(fallbackSpeechText.slice(0, 1800));
+    const cleanText = cleanTextForSpeech(fallbackSpeechText);
+    const utterance = new SpeechSynthesisUtterance(cleanText.slice(0, 1800));
     utterance.rate = 1;
     globalThis.speechSynthesis.speak(utterance);
     localStorage.setItem(key, '1');
@@ -32,7 +34,8 @@ export default function ConceptsViewer({ concepts, voiceExplanation, fallbackSpe
 
   const explainConcept = (concept: Concept) => {
     if (!("speechSynthesis" in globalThis)) return;
-    const utterance = new SpeechSynthesisUtterance(`${concept.concept}. ${concept.explanation}`);
+    const cleanText = cleanTextForSpeech(`${concept.concept}. ${concept.explanation}`);
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.rate = 1;
     globalThis.speechSynthesis.speak(utterance);
   };

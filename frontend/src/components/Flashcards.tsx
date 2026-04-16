@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 type Card = { question: string; answer: string };
 type Props = { cards: Card[] };
@@ -42,11 +43,15 @@ export default function Flashcards({ cards }: Readonly<Props>) {
       >
         <div className="absolute inset-0 rounded-2xl p-6 [backface-visibility:hidden]">
           <p className="mb-3 text-xs uppercase tracking-wide text-blue-600 dark:text-blue-300">Question</p>
-          <p className="text-base leading-7">{card.question}</p>
+          <div className="prose prose-sm prose-slate dark:prose-invert">
+            <ReactMarkdown>{card.question}</ReactMarkdown>
+          </div>
         </div>
         <div className="absolute inset-0 rounded-2xl p-6 [backface-visibility:hidden]" style={{ transform: 'rotateY(180deg)' }}>
           <p className="mb-3 text-xs uppercase tracking-wide text-emerald-600 dark:text-emerald-300">Answer</p>
-          <p className="text-base leading-7">{card.answer}</p>
+          <div className="prose prose-sm prose-slate dark:prose-invert">
+            <ReactMarkdown>{card.answer}</ReactMarkdown>
+          </div>
         </div>
       </button>
 
