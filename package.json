@@ -6,8 +6,8 @@
     "frontend"
   ],
   "scripts": {
-    "build": "npm run build --prefix frontend",
-    "start": "serve -s frontend/dist -l $PORT"
+    "build": "npm run build --prefix frontend && rm -rf dist && cp -rn frontend/dist ./dist",
+    "start": "serve -s dist -l $PORT"
   },
   "dependencies": {
     "serve": "^14.2.6"
