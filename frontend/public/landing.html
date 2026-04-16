@@ -18,7 +18,7 @@ body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);overflo
 @keyframes orbP{0%,100%{opacity:.12;transform:scale(1)}50%{opacity:.22;transform:scale(1.12)}}
 nav{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:200;width:calc(100% - 48px);max-width:1200px;background:rgba(5,8,22,.75);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border:1px solid var(--gb);border-radius:16px;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;transition:background .3s}
 .logo{display:flex;align-items:center;gap:10px;font-size:1.05rem;font-weight:800;text-decoration:none}
-.logo-text{background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-text{background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .logo svg{width:26px;height:26px;flex-shrink:0}
 .nav-links{display:flex;gap:26px;list-style:none}
 .nav-links a{color:var(--muted);text-decoration:none;font-size:.88rem;font-weight:500;transition:color .2s;cursor:pointer}
@@ -33,7 +33,7 @@ section{padding:96px 24px}
 .sh{font-size:clamp(1.75rem,4vw,2.7rem);font-weight:900;line-height:1.08;margin-bottom:14px}
 .ss{color:var(--muted);font-size:1rem;max-width:540px;line-height:1.7}
 .shdr{margin-bottom:54px}.center{text-align:center}.center .ss{margin:0 auto}
-.gt{background:linear-gradient(135deg,var(--blue) 0%,var(--purple) 55%,var(--pink) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.gt{background:linear-gradient(135deg,var(--blue) 0%,var(--purple) 55%,var(--pink) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .reveal{opacity:0;transform:translateY(38px);transition:opacity .7s,transform .7s}
 .reveal.vis{opacity:1;transform:none}
 .btn-p{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border:none;border-radius:12px;padding:15px 34px;font-size:.95rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:9px;transition:transform .2s,box-shadow .2s;animation:pulseG 3s ease-in-out infinite}
@@ -41,7 +41,6 @@ section{padding:96px 24px}
 .btn-p:hover{transform:translateY(-2px) scale(1.02)}
 .btn-s{background:var(--glass);border:1px solid var(--gb);color:var(--text);border-radius:12px;padding:15px 34px;font-size:.95rem;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:9px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:all .2s}
 .btn-s:hover{background:rgba(255,255,255,.09);transform:translateY(-2px)}
-<truncated 3 lines>
 #hero{min-height:100vh;display:flex;align-items:center;padding-top:140px;text-align:center;background:radial-gradient(ellipse 80% 65% at 50% 0%,rgba(59,130,246,.13) 0%,transparent 70%)}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:100px;padding:7px 18px;font-size:.78rem;font-weight:700;color:var(--blue);margin-bottom:28px;animation:fdU .6s ease both}
 .bdot{width:7px;height:7px;background:var(--blue);border-radius:50%;animation:blink 1.5s infinite}
@@ -61,7 +60,7 @@ h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.04;letter-spac
 @keyframes spin{to{transform:rotate(360deg)}}
 .stat-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:60px;animation:fdU .7s .5s ease both}
 .stat-chip{background:var(--card);border:1px solid var(--gb);border-radius:14px;padding:16px 24px;text-align:center;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
-.sn{font-size:1.6rem;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sn{font-size:1.6rem;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .sl{font-size:.76rem;color:var(--muted);margin-top:2px}
 .fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:22px}
 .fc{background:var(--card);border:1px solid var(--gb);border-radius:20px;padding:30px;-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);cursor:pointer;transition:all .3s cubic-bezier(.175,.885,.32,1.275);position:relative;overflow:hidden}
@@ -97,7 +96,7 @@ h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.04;letter-spac
 .dstats{display:grid;gap:14px}
 .dsc{background:rgba(255,255,255,.03);border:1px solid var(--gb);border-radius:14px;padding:18px 22px}
 .dsc-label{font-size:.72rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
-.dsc-num{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.dsc-num{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .pb{height:6px;background:rgba(255,255,255,.1);border-radius:100px;margin-top:8px;overflow:hidden}
 .pf{height:100%;border-radius:100px}
 /* Static bar fills to reduce inline style warnings */
@@ -128,7 +127,7 @@ h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.04;letter-spac
 .pc.pop{border-color:rgba(139,92,246,.5);box-shadow:0 0 42px rgba(139,92,246,.16);background:linear-gradient(160deg,rgba(14,20,45,.9),rgba(20,14,48,.9))}
 .pbadge{position:absolute;top:18px;right:18px;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-size:.68rem;font-weight:700;text-transform:uppercase;padding:4px 12px;border-radius:100px}
 .pname{font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}
-.pprice{font-size:2.8rem;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pprice{font-size:2.8rem;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .pperiod{font-size:.82rem;color:var(--muted);margin-top:6px;margin-bottom:26px}
 .pfeats{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:28px}
 .pfeats li{display:flex;align-items:center;gap:10px;font-size:.88rem;color:var(--muted)}
@@ -138,6 +137,9 @@ h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.04;letter-spac
 .psolid:hover{opacity:.9;transform:translateY(-2px);box-shadow:0 10px 30px rgba(139,92,246,.42)}
 .pout{background:transparent;color:var(--text);border:1px solid var(--gb) !important}
 .pout:hover{background:rgba(255,255,255,.07);transform:translateY(-2px)}
+#features{background:linear-gradient(180deg,transparent,rgba(8,13,34,.8) 50%,transparent)}
+#how{background:radial-gradient(ellipse 60% 40% at 50% 50%,rgba(139,92,246,.08) 0%,transparent 70%)}
+#pricing{background:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(59,130,246,.07) 0%,transparent 70%)}
 #cta{text-align:center;background:radial-gradient(ellipse 80% 65% at 50% 50%,rgba(139,92,246,.1) 0%,transparent 70%)}
 .cbox{background:var(--card);border:1px solid rgba(139,92,246,.32);border-radius:32px;padding:78px 40px;-webkit-backdrop-filter:blur(32px);backdrop-filter:blur(32px);position:relative;overflow:hidden;box-shadow:0 0 88px rgba(139,92,246,.14)}
 .cbox::before{content:"";position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(from 0deg,transparent 0%,rgba(139,92,246,.05) 25%,transparent 50%);animation:cRot 22s linear infinite;pointer-events:none}
@@ -149,7 +151,7 @@ h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.04;letter-spac
 .a11y-row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:36px}
 .achip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--gb);border-radius:100px;padding:8px 16px;font-size:.78rem;color:var(--muted)}
 footer{background:var(--bg2);border-top:1px solid var(--gb);padding:54px 24px 28px;text-align:center;color:var(--muted);font-size:.86rem}
-.flogo{font-size:1.3rem;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px}
+.flogo{font-size:1.3rem;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px}
 .flinks{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin:18px 0}
 .flinks a{color:var(--muted);text-decoration:none;transition:color .2s}
 .flinks a:hover{color:var(--text)}
@@ -209,7 +211,7 @@ footer{background:var(--bg2);border-top:1px solid var(--gb);padding:54px 24px 28
   </div>
 </section>
 
-<section id="features" style="background:linear-gradient(180deg,transparent,rgba(8,13,34,.8) 50%,transparent)" aria-labelledby="fh">
+<section id="features" aria-labelledby="fh">
   <div class="wrap">
     <div class="shdr center reveal"><div class="stag">Capabilities</div><h2 class="sh" id="fh">Everything You Need to <span class="gt">Learn Freely</span></h2><p class="ss">A full accessibility-first AI platform built for every type of learner.</p></div>
     <div class="fg">
@@ -223,7 +225,7 @@ footer{background:var(--bg2);border-top:1px solid var(--gb);padding:54px 24px 28
   </div>
 </section>
 
-<section id="how" style="background:radial-gradient(ellipse 60% 40% at 50% 50%,rgba(139,92,246,.08) 0%,transparent 70%)" aria-labelledby="hwh">
+<section id="how" aria-labelledby="hwh">
   <div class="wrap">
     <div class="shdr center reveal"><div class="stag">Process</div><h2 class="sh" id="hwh">Simple. <span class="gt">Powerful.</span> Accessible.</h2><p class="ss">Get started in seconds — no technical knowledge required.</p></div>
     <div class="steps">
@@ -264,7 +266,7 @@ footer{background:var(--bg2);border-top:1px solid var(--gb);padding:54px 24px 28
   <div class="ttrack-wrap reveal" role="region" aria-label="Testimonials"><div class="ttrack" id="tt"></div></div>
 </section>
 
-<section id="pricing" style="background:radial-gradient(ellipse 70% 50% at 50% 50%,rgba(59,130,246,.07) 0%,transparent 70%)" aria-labelledby="ph">
+<section id="pricing" aria-labelledby="ph">
   <div class="wrap">
     <div class="shdr center reveal"><div class="stag">Pricing</div><h2 class="sh" id="ph">Simple, <span class="gt">Transparent</span> Pricing</h2><p class="ss">Start free. Upgrade anytime. No surprises or hidden fees.</p></div>
     <div class="ptoggle reveal">
