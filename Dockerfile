@@ -1,4 +1,4 @@
-# Stage 1: Build
+# Build Stage
 FROM node:20-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -7,18 +7,15 @@ RUN npm install
 COPY . .
 RUN npm run build --prefix frontend
 
-# Stage 2: Serve with Nginx
-FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
+# Production Stage
+FROM node:20-slim
+WORKDIR /app
+RUN npm install -g serve
+COPY --from=build /app/frontend/dist ./dist
 
-# Copy built files
-COPY --from=build /app/frontend/dist .
+# Use the dynamic Railway PORT
+ENV PORT=3000
+EXPOSE 3000
 
-# Copy nginx template
-COPY nginx.conf /etc/nginx/conf.d/config.template
-
-# Default port to 80 if PORT is not set (e.g., local testing)
-ENV PORT=80
-
-# Use envsubst to replace ${PORT} in the template and start nginx
-CMD ["/bin/sh", "-c", "envsubst '${PORT}' < /etc/nginx/conf.d/config.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# We use the shell form of CMD to ensure $PORT is expanded correctly
+CMD serve -s dist -l $PORT
