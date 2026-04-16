@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -30,8 +31,16 @@ from services.evaluation_agent import EvaluationAgent
 from services.flashcard_generator import FlashcardGenerator
 from services.gemini_service import GeminiService, GeminiServiceError
 from services.knowledge_agent import KnowledgeAgent
-from services.multi_agent_tutor import MultiAgentSession, MultiAgentTutor, MultiAgentTutorError
-from services.pdf_processor import PDFProcessingError, chunk_document, extract_text_from_pdf
+from services.multi_agent_tutor import (
+    MultiAgentSession,
+    MultiAgentTutor,
+    MultiAgentTutorError,
+)
+from services.pdf_processor import (
+    PDFProcessingError,
+    chunk_document,
+    extract_text_from_pdf,
+)
 from services.quiz_generator import QuizGenerator
 from services.rag_service import RAGService
 from services.rvc_service import RVCService
@@ -43,6 +52,8 @@ from services.vector_store import VectorStore, VectorStoreError
 from services.voice_agent import VoiceAgent
 from services.voice_pipeline import VoicePipeline, VoicePipelineError
 from services.voice_streamer import VoiceStreamer, VoiceStreamerError
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -79,7 +90,9 @@ class ServiceContainer:
     current_explanation: str = ""
     current_explanation_audio: str = ""
     current_file_hash: str = ""
-    processing_status: dict[str, str | int] = field(default_factory=lambda: {"step": "idle", "progress": 0})
+    processing_status: dict[str, str | int] = field(
+        default_factory=lambda: {"step": "idle", "progress": 0}
+    )
     multi_agent_session: MultiAgentSession = field(default_factory=MultiAgentSession)
     accessibility: AccessibilitySettings = field(default_factory=AccessibilitySettings)
 
@@ -100,7 +113,9 @@ _command_agent = CommandAgent()
 _knowledge_agent = KnowledgeAgent(_gemini, _vector_store)
 _evaluation_agent = EvaluationAgent(_gemini)
 _voice_agent = VoiceAgent(_voice_pipeline)
-_multi_agent_tutor = MultiAgentTutor(_command_agent, _knowledge_agent, None, _evaluation_agent, _voice_agent)
+_multi_agent_tutor = MultiAgentTutor(
+    _command_agent, _knowledge_agent, None, _evaluation_agent, _voice_agent
+)
 
 services = ServiceContainer(
     vector_store=_vector_store,
@@ -122,21 +137,51 @@ services = ServiceContainer(
     cache=_cache,
     adaptive_quiz=_adaptive_quiz,
     emotion_detector=_emotion_detector,
-    tutor_agent=TutorAgent(_gemini, _voice_pipeline, _adaptive_quiz, _emotion_detector, _voice_streamer),
+    tutor_agent=None,
     braille=BrailleService(),
 )
 
-services.tutor_agent.voice_pipeline = services.voice_pipeline
-services.multi_agent_tutor.tutor_agent = services.tutor_agent
+
+def _get_tutor_agent():
+    if services.tutor_agent is None:
+        logger.info("Initializing TutorAgent lazily...")
+        services.tutor_agent = TutorAgent(
+            services.gemini,
+            services.voice_pipeline,
+            services.adaptive_quiz,
+            services.emotion_detector,
+            services.voice_streamer,
+        )
+        services.tutor_agent.voice_pipeline = services.voice_pipeline
+        services.multi_agent_tutor.tutor_agent = services.tutor_agent
+    return services.tutor_agent
+
+
+def _get_multi_agent_tutor():
+    _get_tutor_agent()
+    return services.multi_agent_tutor
+
 
 voice_output_dir = Path("data") / "voice_outputs"
 voice_output_dir.mkdir(parents=True, exist_ok=True)
 
 
-@router.post("/upload-pdf", responses={400: {"description": "Invalid file"}, 422: {"description": "Unprocessable PDF"}, 500: {"description": "Server error"}, 502: {"description": "AI voice generation failure"}})
-async def upload_pdf(background_tasks: BackgroundTasks, file: Annotated[UploadFile, File(...)]):
+@router.post(
+    "/upload-pdf",
+    responses={
+        400: {"description": "Invalid file"},
+        422: {"description": "Unprocessable PDF"},
+        500: {"description": "Server error"},
+        502: {"description": "AI voice generation failure"},
+    },
+)
+async def upload_pdf(
+    background_tasks: BackgroundTasks, file: Annotated[UploadFile, File(...)]
+):
     if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a PDF.")
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. Please upload a PDF."
+        )
 
     try:
         services.processing_status = {"step": "extracting_text", "progress": 10}
@@ -152,9 +197,19 @@ async def upload_pdf(background_tasks: BackgroundTasks, file: Annotated[UploadFi
                 "status": "ok",
                 "cached": True,
                 "filename": file.filename,
-                "text_length": len(services.current_document.text if services.current_document else ""),
-                "chunks": len(services.current_document.chunks if services.current_document else []),
-                "chunk_count": len(services.current_document.chunks if services.current_document else []),
+                "text_length": len(
+                    services.current_document.text if services.current_document else ""
+                ),
+                "chunks": len(
+                    services.current_document.chunks
+                    if services.current_document
+                    else []
+                ),
+                "chunk_count": len(
+                    services.current_document.chunks
+                    if services.current_document
+                    else []
+                ),
                 "summary": services.current_summary,
                 "concepts": services.current_concepts,
                 "flashcards": services.current_flashcards,
@@ -166,7 +221,10 @@ async def upload_pdf(background_tasks: BackgroundTasks, file: Annotated[UploadFi
 
         text = extract_text_from_pdf(file_bytes)
         chunks = chunk_document(text, chunk_size_tokens=500, overlap_tokens=50)
-        background_tasks.add_task(services.vector_store.store_embeddings_background, [c.model_dump() for c in chunks])
+        background_tasks.add_task(
+            services.vector_store.store_embeddings_background,
+            [c.model_dump() for c in chunks],
+        )
 
         services.current_document = StoredDocument(
             filename=file.filename,
@@ -182,11 +240,17 @@ async def upload_pdf(background_tasks: BackgroundTasks, file: Annotated[UploadFi
             summary_error = str(ex)
             summary = _fallback_summary(text)
 
-        services.processing_status = {"step": "generating_learning_materials", "progress": 70}
+        services.processing_status = {
+            "step": "generating_learning_materials",
+            "progress": 70,
+        }
         concepts_task = asyncio.to_thread(services.gemini.generate_concepts, summary)
         flashcards_task = asyncio.to_thread(services.flashcards.generate, summary)
         quiz_task = asyncio.to_thread(services.quiz.generate, summary)
-        explanation_task = asyncio.to_thread(services.gemini.tutor_chat, f"Explain this summary clearly for a student:\n\n{summary}")
+        explanation_task = asyncio.to_thread(
+            services.gemini.tutor_chat,
+            f"Explain this summary clearly for a student:\n\n{summary}",
+        )
 
         concepts, flashcards, quiz, explanation = await asyncio.gather(
             concepts_task,
@@ -199,7 +263,11 @@ async def upload_pdf(background_tasks: BackgroundTasks, file: Annotated[UploadFi
         concepts = concepts if isinstance(concepts, list) else []
         flashcards = flashcards if isinstance(flashcards, list) else []
         quiz = quiz if isinstance(quiz, list) else []
-        explanation = explanation if isinstance(explanation, str) and explanation.strip() else summary
+        explanation = (
+            explanation
+            if isinstance(explanation, str) and explanation.strip()
+            else summary
+        )
 
         if not concepts:
             concepts = _fallback_concepts(summary)
@@ -214,7 +282,9 @@ async def upload_pdf(background_tasks: BackgroundTasks, file: Annotated[UploadFi
         try:
             voice_result = await services.voice_pipeline.explain_document(explanation)
             explanation = str(voice_result["explanation"] or explanation)
-            audio_path = _persist_audio_bytes(voice_result["audio"], prefix="explanation")
+            audio_path = _persist_audio_bytes(
+                voice_result["audio"], prefix="explanation"
+            )
         except VoicePipelineError as ex:
             voice_error = str(ex)
 
@@ -265,7 +335,9 @@ async def upload_pdf(background_tasks: BackgroundTasks, file: Annotated[UploadFi
     except VectorStoreError as ex:
         raise HTTPException(status_code=500, detail=str(ex)) from ex
     except Exception as ex:
-        raise HTTPException(status_code=500, detail=f"Unexpected upload error: {ex}") from ex
+        raise HTTPException(
+            status_code=500, detail=f"Unexpected upload error: {ex}"
+        ) from ex
 
 
 @router.post(
@@ -283,43 +355,82 @@ async def upload_pdf_legacy(file: Annotated[UploadFile, File(...)]):
     return await upload_pdf(bg, file)
 
 
-@router.get("/summary", responses={400: {"description": "No document uploaded"}, 502: {"description": "AI service failure"}})
+@router.get(
+    "/summary",
+    responses={
+        400: {"description": "No document uploaded"},
+        502: {"description": "AI service failure"},
+    },
+)
 def get_summary():
     _require_document()
     return {"summary": services.current_summary}
 
 
-@router.get("/concepts", responses={400: {"description": "No document uploaded"}, 502: {"description": "AI service failure"}})
+@router.get(
+    "/concepts",
+    responses={
+        400: {"description": "No document uploaded"},
+        502: {"description": "AI service failure"},
+    },
+)
 def get_concepts():
     _require_document()
     return {"concepts": services.current_concepts}
 
 
-@router.get("/flashcards", responses={400: {"description": "No document uploaded"}, 502: {"description": "AI service failure"}})
+@router.get(
+    "/flashcards",
+    responses={
+        400: {"description": "No document uploaded"},
+        502: {"description": "AI service failure"},
+    },
+)
 def get_flashcards():
     _require_document()
     return {"flashcards": services.current_flashcards}
 
 
-@router.get("/quiz", responses={400: {"description": "No document uploaded"}, 502: {"description": "AI service failure"}})
+@router.get(
+    "/quiz",
+    responses={
+        400: {"description": "No document uploaded"},
+        502: {"description": "AI service failure"},
+    },
+)
 def get_quiz():
     _require_document()
     return {"quiz": services.current_quiz}
 
 
-@router.post("/chat", responses={400: {"description": "No document uploaded"}, 502: {"description": "AI/RAG failure"}})
+@router.post(
+    "/chat",
+    responses={
+        400: {"description": "No document uploaded"},
+        502: {"description": "AI/RAG failure"},
+    },
+)
 def post_chat(payload: ChatRequest):
     try:
         if services.current_document is not None:
             response = services.rag.answer_question(payload.question)
         else:
-            response = {"answer": services.gemini.tutor_chat(payload.question), "sources": []}
+            response = {
+                "answer": services.gemini.tutor_chat(payload.question),
+                "sources": [],
+            }
         return response
     except (VectorStoreError, GeminiServiceError) as ex:
         raise HTTPException(status_code=502, detail=str(ex)) from ex
 
 
-@router.post("/voice-chat", responses={400: {"description": "Invalid audio file"}, 502: {"description": "Voice pipeline failure"}})
+@router.post(
+    "/voice-chat",
+    responses={
+        400: {"description": "Invalid audio file"},
+        502: {"description": "Voice pipeline failure"},
+    },
+)
 async def post_voice_chat(file: Annotated[UploadFile, File(...)]):
     try:
         audio_bytes = await file.read()
@@ -331,19 +442,29 @@ async def post_voice_chat(file: Annotated[UploadFile, File(...)]):
             "X-Transcript": quote(str(result["transcript"]))[:500],
             "X-Answer-Preview": quote(str(result["answer"])[:220]),
         }
-        return StreamingResponse(iter([result["audio"]]), media_type="audio/wav", headers=headers)
+        return StreamingResponse(
+            iter([result["audio"]]), media_type="audio/wav", headers=headers
+        )
     except VoicePipelineError as ex:
         raise HTTPException(status_code=502, detail=str(ex)) from ex
 
 
-@router.post("/tutor-conversation", responses={400: {"description": "Invalid question"}, 502: {"description": "Tutor generation failure"}})
+@router.post(
+    "/tutor-conversation",
+    responses={
+        400: {"description": "Invalid question"},
+        502: {"description": "Tutor generation failure"},
+    },
+)
 async def post_tutor_conversation(payload: ChatRequest):
     if not payload.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
 
-    context = services.current_document.text if services.current_document is not None else ""
+    context = (
+        services.current_document.text if services.current_document is not None else ""
+    )
     try:
-        result = await services.tutor_agent.tutor_conversation(payload.question, context)
+        result = await _get_tutor_agent().tutor_conversation(payload.question, context)
         audio_path = _persist_audio_bytes(result["audio"], prefix="conversation")
         return {
             "response": result["response"],
@@ -353,16 +474,28 @@ async def post_tutor_conversation(payload: ChatRequest):
         raise HTTPException(status_code=502, detail=str(ex)) from ex
 
 
-@router.post("/tutor-turn", responses={400: {"description": "Invalid tutor input"}, 502: {"description": "Tutor loop failure"}})
+@router.post(
+    "/tutor-turn",
+    responses={
+        400: {"description": "Invalid tutor input"},
+        502: {"description": "Tutor loop failure"},
+    },
+)
 async def post_tutor_turn(payload: dict):
     question = str(payload.get("question", ""))
     student_answer = str(payload.get("student_answer", ""))
-    context = services.current_document.text if services.current_document is not None else str(payload.get("context", ""))
+    context = (
+        services.current_document.text
+        if services.current_document is not None
+        else str(payload.get("context", ""))
+    )
     if not question.strip() and not student_answer.strip():
-        raise HTTPException(status_code=400, detail="Provide question or student_answer.")
+        raise HTTPException(
+            status_code=400, detail="Provide question or student_answer."
+        )
 
     try:
-        result = await services.tutor_agent.tutor_turn(
+        result = await _get_tutor_agent().tutor_turn(
             question=question,
             context=context,
             state=services.tutor_state,
@@ -380,15 +513,29 @@ async def post_tutor_turn(payload: dict):
         raise HTTPException(status_code=502, detail=str(ex)) from ex
 
 
-@router.post("/adaptive-quiz", responses={400: {"description": "No context available"}, 502: {"description": "Adaptive quiz failure"}})
+@router.post(
+    "/adaptive-quiz",
+    responses={
+        400: {"description": "No context available"},
+        502: {"description": "Adaptive quiz failure"},
+    },
+)
 def post_adaptive_quiz(payload: dict):
     difficulty = str(payload.get("difficulty", services.tutor_state.difficulty))
-    context = services.current_document.text if services.current_document is not None else str(payload.get("context", ""))
+    context = (
+        services.current_document.text
+        if services.current_document is not None
+        else str(payload.get("context", ""))
+    )
     if not context.strip():
-        raise HTTPException(status_code=400, detail="No context available for adaptive quiz.")
+        raise HTTPException(
+            status_code=400, detail="No context available for adaptive quiz."
+        )
 
     try:
-        q = services.adaptive_quiz.generate_question(context=context, difficulty=difficulty)
+        q = services.adaptive_quiz.generate_question(
+            context=context, difficulty=difficulty
+        )
         services.tutor_state.difficulty = q.difficulty
         services.tutor_state.last_question = q.question
         services.tutor_state.expected_answer = q.expected_answer
@@ -401,15 +548,28 @@ def post_adaptive_quiz(payload: dict):
         raise HTTPException(status_code=502, detail=str(ex)) from ex
 
 
-@router.get("/voice-stream-explanation", responses={400: {"description": "No document uploaded"}, 502: {"description": "Streaming voice failure"}})
+@router.get(
+    "/voice-stream-explanation",
+    responses={
+        400: {"description": "No document uploaded"},
+        502: {"description": "Streaming voice failure"},
+    },
+)
 async def get_voice_stream_explanation():
     _require_document()
-    context = services.current_summary or (services.current_document.text if services.current_document else "")
+    context = services.current_summary or (
+        services.current_document.text if services.current_document else ""
+    )
 
     async def ndjson_stream():
-        yield json.dumps({"type": "start", "message": "Streaming explanation started."}) + "\n"
+        yield (
+            json.dumps({"type": "start", "message": "Streaming explanation started."})
+            + "\n"
+        )
         async for stream_chunk in services.voice_streamer.stream_explanation(context):
-            audio_path = _persist_audio_bytes(stream_chunk.audio, prefix=f"stream_{stream_chunk.index}")
+            audio_path = _persist_audio_bytes(
+                stream_chunk.audio, prefix=f"stream_{stream_chunk.index}"
+            )
             payload = {
                 "type": "chunk",
                 "index": stream_chunk.index,
@@ -426,14 +586,24 @@ async def get_voice_stream_explanation():
         raise HTTPException(status_code=502, detail=str(ex)) from ex
 
 
-@router.post("/tutor-conversation-stream", responses={400: {"description": "Invalid question"}, 502: {"description": "Tutor stream failure"}})
+@router.post(
+    "/tutor-conversation-stream",
+    responses={
+        400: {"description": "Invalid question"},
+        502: {"description": "Tutor stream failure"},
+    },
+)
 async def post_tutor_conversation_stream(payload: ChatRequest):
     if not payload.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
-    context = services.current_summary or (services.current_document.text if services.current_document else "")
+    context = services.current_summary or (
+        services.current_document.text if services.current_document else ""
+    )
 
     async def ndjson_stream():
-        async for chunk in services.tutor_agent.tutor_conversation_stream(payload.question, context):
+        async for chunk in _get_tutor_agent().tutor_conversation_stream(
+            payload.question, context
+        ):
             yield json.dumps({"type": "text", **chunk}) + "\n"
 
     try:
@@ -442,12 +612,16 @@ async def post_tutor_conversation_stream(payload: ChatRequest):
         raise HTTPException(status_code=502, detail=str(ex)) from ex
 
 
-@router.get("/demo-mode/start", responses={502: {"description": "Demo greeting failure"}})
+@router.get(
+    "/demo-mode/start", responses={502: {"description": "Demo greeting failure"}}
+)
 async def start_demo_mode():
     greeting = "Welcome to NeuroLearn Assist. Your AI tutor is ready to help you learn."
     hello = "Hello, I am your NeuroLearn AI Tutor. Please upload your document."
     try:
-        audio_bytes = await services.voice_streamer.greeting_audio(f"{greeting} {hello}")
+        audio_bytes = await services.voice_streamer.greeting_audio(
+            f"{greeting} {hello}"
+        )
         audio_path = _persist_audio_bytes(audio_bytes, prefix="demo_greeting")
         return {
             "message": greeting,
@@ -486,11 +660,16 @@ def post_agent_command(payload: dict):
     }
 
 
-@router.post("/multi-agent/handle", responses={502: {"description": "Multi-agent processing failure"}})
+@router.post(
+    "/multi-agent/handle",
+    responses={502: {"description": "Multi-agent processing failure"}},
+)
 async def post_multi_agent_handle(payload: dict):
     user_text = str(payload.get("command", ""))
     student_answer = str(payload.get("answer", ""))
-    context = services.current_document.text if services.current_document is not None else ""
+    context = (
+        services.current_document.text if services.current_document is not None else ""
+    )
 
     try:
         result = await services.multi_agent_tutor.handle(
@@ -500,7 +679,11 @@ async def post_multi_agent_handle(payload: dict):
             student_answer=student_answer,
         )
         audio = result.get("audio", b"")
-        audio_path = _persist_audio_bytes(audio, prefix="multi_agent") if isinstance(audio, (bytes, bytearray)) and len(audio) > 0 else ""
+        audio_path = (
+            _persist_audio_bytes(audio, prefix="multi_agent")
+            if isinstance(audio, (bytes, bytearray)) and len(audio) > 0
+            else ""
+        )
         return {
             **{k: v for k, v in result.items() if k != "audio"},
             "voice": audio_path,
@@ -509,7 +692,9 @@ async def post_multi_agent_handle(payload: dict):
         raise HTTPException(status_code=502, detail=str(ex)) from ex
 
 
-@router.get("/voice-file/{file_name}", responses={404: {"description": "Voice file not found"}})
+@router.get(
+    "/voice-file/{file_name}", responses={404: {"description": "Voice file not found"}}
+)
 def get_voice_file(file_name: str):
     file_path = voice_output_dir / file_name
     if not file_path.exists():
@@ -520,13 +705,22 @@ def get_voice_file(file_name: str):
 @router.post(
     "/voice",
     include_in_schema=False,
-    responses={400: {"description": "Invalid audio file"}, 502: {"description": "Voice pipeline failure"}},
+    responses={
+        400: {"description": "Invalid audio file"},
+        502: {"description": "Voice pipeline failure"},
+    },
 )
 async def post_voice_legacy(file: Annotated[UploadFile, File(...)]):
     return await post_voice_chat(file)
 
 
-@router.post("/transcribe", responses={400: {"description": "Invalid audio file"}, 502: {"description": "Transcription failure"}})
+@router.post(
+    "/transcribe",
+    responses={
+        400: {"description": "Invalid audio file"},
+        502: {"description": "Transcription failure"},
+    },
+)
 async def transcribe_audio(file: Annotated[UploadFile, File(...)]):
     try:
         audio_bytes = await file.read()
@@ -538,11 +732,15 @@ async def transcribe_audio(file: Annotated[UploadFile, File(...)]):
         raise HTTPException(status_code=502, detail=str(ex)) from ex
 
 
-@router.post("/braille", responses={503: {"description": "Braille hardware unavailable"}})
+@router.post(
+    "/braille", responses={503: {"description": "Braille hardware unavailable"}}
+)
 def post_braille(payload: BrailleRequest):
     try:
         if payload.port:
-            result = services.braille.send_to_arduino(payload.text, port=payload.port, baud_rate=payload.baud_rate)
+            result = services.braille.send_to_arduino(
+                payload.text, port=payload.port, baud_rate=payload.baud_rate
+            )
             return {
                 "status": "sent",
                 "braille_text": result.braille_text,
@@ -555,7 +753,9 @@ def post_braille(payload: BrailleRequest):
         raise HTTPException(status_code=503, detail=str(ex)) from ex
 
 
-@router.post("/braille-output", responses={503: {"description": "Braille hardware unavailable"}})
+@router.post(
+    "/braille-output", responses={503: {"description": "Braille hardware unavailable"}}
+)
 def post_braille_output(payload: BrailleRequest):
     return post_braille(payload)
 
@@ -656,5 +856,7 @@ def _hydrate_services_from_cache(cached: dict[str, Any]) -> None:
     services.current_concepts = list(cached.get("concepts", []))
     services.current_flashcards = list(cached.get("flashcards", []))
     services.current_quiz = list(cached.get("quiz", []))
-    services.current_explanation = str(cached.get("explanation", services.current_summary))
+    services.current_explanation = str(
+        cached.get("explanation", services.current_summary)
+    )
     services.current_explanation_audio = str(cached.get("voice_explanation", ""))
